@@ -110,17 +110,26 @@ fn main() {
             let reader = BufReader::new(file);
 
             let mut lines: Vec<String> = Vec::new();
+            let mut target_found = false;
+
             for line in reader.lines() {
                 let line = line.expect("Failed to read line");
                 let entry_name = line.split('=').next().unwrap_or("");
                 if entry_name != name {
                     lines.push(line);
+                } else {
+                    target_found = true;
                 }
             }
-
-            let mut file = File::create("targets.txt").expect("Failed to open file for writing");
-            for line in lines {
-                writeln!(file, "{}", line).expect("Failed to write line");
+            if target_found {
+                let mut file =
+                    File::create(&targets_file_path).expect("Failed to open file for writing");
+                for line in lines {
+                    writeln!(file, "{}", line).expect("Failed to write line");
+                }
+                println!("Target removed successfully.");
+            } else {
+                println!("Target not found.");
             }
         }
         Commands::Install => {
@@ -161,7 +170,7 @@ fn main() {
 
             writeln!(
                 shell_config_file,
-                "\n# shell function to allow sourcing \nfunction tIP() {{\n  {} \"$@\"\n  source {}\n}}",
+                "\n# shell function to allow sourcing \nfunction tip() {{\n  {} \"$@\"\n  source {}\n}}",
                 exe_path.display(),
                 shell_config_path.display()
             )
@@ -175,7 +184,7 @@ fn main() {
             .expect("Failed to convert targets.txt path to string");
 
         let config_update = format!(
-            "\n# Add current folder to PATH if not already added\nif [[ \":$PATH:\" != *\":{}:\"* ]]; then\n    export PATH=\"$PATH:{}\"\nfi\n\n# Begin tIP configuration\nfunction load_targets() {{\n    while IFS='=' read -r name address; do\n        export \"$name=$address\"\n    done < \"{}\"\n}}\n\n# Call the load_targets function during shell initialization\nload_targets",
+            "\n# Adds tip install folder to PATH if not already added\nif [[ \":$PATH:\" != *\":{}:\"* ]]; then\n    export PATH=\"$PATH:{}\"\nfi\n\n# Begin tip configuration\nfunction load_targets() {{\n    while IFS='=' read -r name address; do\n        export \"$name=$address\"\n    done < \"{}\"\n}}\n\n# Call the load_targets function during shell initialization\nload_targets",
             std::env::current_dir().unwrap().to_str().unwrap(),
             std::env::current_dir().unwrap().to_str().unwrap(),
             targets_file_path_str
@@ -185,7 +194,7 @@ fn main() {
         let reader = BufReader::new(file);
         let already_updated = reader.lines().any(|line| {
             line.as_ref()
-                .map_or(false, |l| l.contains("# Begin tIP configuration"))
+                .map_or(false, |l| l.contains("# Begin tip configuration"))
         });
 
         if !already_updated {
@@ -194,7 +203,7 @@ fn main() {
                 .open(shell_config_path)
                 .expect("Failed to open shell config file for appending");
 
-            writeln!(file, "{}", config_update).expect("Failed to write tIP configuration");
+            writeln!(file, "{}", config_update).expect("Failed to write tip configuration");
         }
     }
 }

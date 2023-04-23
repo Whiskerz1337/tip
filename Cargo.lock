@@ -324,15 +324,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tIP"
-version = "0.1.0"
-dependencies = [
- "clap",
- "dirs",
- "regex",
-]
-
-[[package]]
 name = "thiserror"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -350,6 +341,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tip"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "dirs",
+ "regex",
 ]
 
 [[package]]
