@@ -3,6 +3,8 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
+use crate::utility_functions;
+
 pub fn get_shell_config_path() -> PathBuf {
     let shell_config_path = match std::env::var("SHELL") {
         Ok(shell_path) => {
@@ -28,10 +30,10 @@ pub fn get_shell_config_path() -> PathBuf {
 
 pub fn tip_config_is_sourced(
     shell_config_path: &PathBuf,
-    tip_config_path: &PathBuf,
+    full_tip_config_path: &PathBuf,
 ) -> std::io::Result<(bool, bool)> {
     let comment = "# Source tip configuration";
-    let source_line = format!("source {}", tip_config_path.to_string_lossy());
+    let source_line = format!("source {}", full_tip_config_path.to_string_lossy());
 
     let file = std::fs::File::open(shell_config_path)?;
     let reader = std::io::BufReader::new(file);
@@ -44,15 +46,15 @@ pub fn tip_config_is_sourced(
             (comment_present, source_line_present)
         });
 
-    Ok((comment_present, source_line_present))
+    Ok((!comment_present, !source_line_present))
 }
 
 pub fn source_tip_config(
     shell_config_path: &PathBuf,
-    tip_config_path: &PathBuf,
+    full_tip_config_path: &PathBuf,
 ) -> std::io::Result<()> {
     let comment = "# Source tip configuration";
-    let source_line = format!("source {}", tip_config_path.to_string_lossy());
+    let source_line = format!("source {}", full_tip_config_path.to_string_lossy());
 
     let mut file = OpenOptions::new()
         .append(true)
@@ -63,6 +65,34 @@ pub fn source_tip_config(
     writeln!(file, "{}", source_line)?;
 
     Ok(())
+}
+
+pub fn get_full_path(directory: &Path, relative_path: &PathBuf) -> PathBuf {
+    directory.join(relative_path)
+}
+
+pub fn shell_config_validation(exe_path: &PathBuf) {
+    let tip_config_path = get_tip_config_path();
+    let shell_config_path = get_shell_config_path();
+    let parent_directory = exe_path
+        .parent()
+        .expect("Failed to get parent directory of executable");
+
+    let full_tip_config_path = get_full_path(&parent_directory, &tip_config_path);
+
+    match tip_config_is_sourced(&shell_config_path, &full_tip_config_path) {
+        Ok((comment_not_present, source_line_not_present)) => {
+            if comment_not_present || source_line_not_present {
+                match source_tip_config(&shell_config_path, &full_tip_config_path) {
+                    Ok(_) => println!("Shell configuration completed successfully.\n\nPlease restart the shell or run 'source {}'", shell_config_path.to_string_lossy()),
+                    Err(e) => println!("Error: {}", e),
+                }
+            } else {
+                println!("The tip configuration is already sourced.");
+            }
+        }
+        Err(e) => println!("Error: {}", e),
+    }
 }
 
 pub fn target_list_exists(targets_file_path: &PathBuf) -> bool {
@@ -99,23 +129,60 @@ pub fn target_list_validation(targets_file_path: &PathBuf) {
 pub fn create_tip_config(
     targets_file_path: &PathBuf,
     exe_path: &PathBuf,
+    tip_config_path: &Path,
+    full_tip_config_path: &PathBuf,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let binding = std::env::current_dir()?;
     let current_dir = binding.to_str().unwrap();
     let targets_file_path_str = targets_file_path.to_string_lossy();
-
-    // Create the 'config' directory in the current folder
     let config_dir = PathBuf::from("config");
     std::fs::create_dir_all(&config_dir)?;
-
-    // Set the tip_config_path to be inside the 'config' directory
-    let tip_config_path = config_dir.join("tip-config.sh");
-
     let config_update = format!(
         "# Adds tip install folder to PATH if not already added\nif [[ \":$PATH:\" != *\":{}:\"* ]]; then\n    export PATH=\"$PATH:{}\"\nfi\n\n# Begin tip configuration\nfunction load_targets() {{\n    while IFS='=' read -r name address; do\n        export \"$name=$address\"\n    done < \"{}\"\n}}\n\n# Call the load_targets function during shell initialization\nload_targets\n\n# Shell function to allow sourcing\nfunction tip() {{\n  {} \"$@\"\n  source {}\n}}",
-        current_dir, current_dir, targets_file_path_str, exe_path.display(), tip_config_path.display()
+        current_dir, current_dir, targets_file_path_str, exe_path.display(), full_tip_config_path.display()
     );
 
     std::fs::write(&tip_config_path, config_update)?;
-    Ok(tip_config_path)
+    Ok(tip_config_path.to_path_buf())
+}
+
+pub fn get_tip_config_path() -> PathBuf {
+    PathBuf::from("config/tip-config.sh")
+}
+
+pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
+    let config_dir = PathBuf::from("config");
+    let tip_config_path = config_dir.join("tip-config.sh");
+    let parent_directory = exe_path
+        .parent()
+        .expect("Failed to get parent directory of executable");
+    let full_tip_config_path = get_full_path(parent_directory, &tip_config_path);
+
+    if !tip_config_exists(&full_tip_config_path) {
+        if let Err(e) = create_tip_config(
+            &targets_file_path,
+            exe_path,
+            &tip_config_path,
+            &full_tip_config_path,
+        ) {
+            eprintln!("Failed to create configuration file: {}", e);
+        } else {
+            println!("Configuration file created sucessfully.");
+        }
+    } else {
+        if utility_functions::user_confirmation(
+            "Found configuration file. Would you like to reset it? y/n",
+        ) {
+            if let Err(e) = create_tip_config(
+                &targets_file_path,
+                exe_path,
+                &tip_config_path,
+                &full_tip_config_path,
+            ) {
+                eprintln!("Failed to create configuration file: {}", e);
+            } else {
+                println!("Configuration file reset sucessfully.");
+            }
+        }
+    }
 }

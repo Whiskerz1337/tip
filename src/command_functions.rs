@@ -3,6 +3,7 @@ use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
 
 pub use crate::install_functions;
+pub use crate::utility_functions;
 
 pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) {
     let file = OpenOptions::new()
@@ -21,13 +22,9 @@ pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) 
         if entry_name == name {
             entry_already_exists = true;
 
-            println!("The entry already exists. Do you want to update it? (y/n)");
-            let mut input = String::new();
-            std::io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read input");
-
-            if input.trim().to_lowercase() == "y" {
+            if utility_functions::user_confirmation(
+                "The entry already exists, would you like to update it? y/n",
+            ) {
                 lines[index] = format!("{}={}", name, address);
                 let mut file = OpenOptions::new()
                     .write(true)
@@ -99,6 +96,8 @@ pub fn purge_list(targets_file_path: &PathBuf) {
     println!("Target list purged successfully.");
 }
 
-pub fn install_tip(targets_file_path: &PathBuf) {
-    install_functions::target_list_validation(targets_file_path)
+pub fn install_tip(targets_file_path: &PathBuf, exe_path: &PathBuf) {
+    install_functions::target_list_validation(targets_file_path);
+    install_functions::tip_config_validation(targets_file_path, exe_path);
+    install_functions::shell_config_validation(exe_path);
 }
