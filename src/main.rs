@@ -1,7 +1,10 @@
+// use std::path::{Path, PathBuf};
+
 use clap::{Parser, Subcommand};
 
 mod command_functions;
 pub mod install_functions;
+pub mod utility_functions;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -42,6 +45,6 @@ fn main() {
         Commands::Remove { name } => command_functions::remove_target(&targets_file_path, &name),
         Commands::List => command_functions::list_targets(&targets_file_path),
         Commands::Purge => command_functions::purge_list(&targets_file_path),
-        Commands::Install => command_functions::install_tip(&targets_file_path),
+        Commands::Install => command_functions::install_tip(&targets_file_path, &exe_path),
     }
 }
