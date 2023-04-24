@@ -25,10 +25,11 @@ Currently supported shells:
 
 # Basic Installation
 
-1. Download the latest release at https://github.com/Whiskerz1337/tip/releases/download/v1.1.0/tipv1.1.0.zip
+1. Download the latest release ```wget https://github.com/Whiskerz1337/tip/releases/download/v1.1.0/tipv1.1.0.zip```
 2. unzip the folder in the desired location
-3. run ```./tip install```
-4. Restart the shell or source the shell config file
+3. cd into the new folder
+4. run ```./tip install```
+5. Restart the shell or source the shell config file
 
 You should now be able to access tip from any location.
 
