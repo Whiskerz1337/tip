@@ -1,7 +1,7 @@
 # tip 
 #### A Simple Linux CLI Tool for Saving and Managing Target IP Addresses
 
-Tip is a command line interface (CLI) tool written in Rust that simplifies managing target IP addresses by storing them in a file and allowing you to easily add, remove, list, and update targets. It also provides a shell function to source the targets into your environment variables.
+Tip is a command line interface (CLI) tool written in Rust that simplifies managing multiple target IP addresses by storing them in a file and allowing you to easily add, remove, list, and update targets. It also provides a shell function to source the targets into your environment variables.
 
 Normal variable assignment is possible in Linux by default, however these are lost on reboot and when creating new shell instances. Personally I regularly find myself with multiple terminal windows open running different scans, and having to retype (and remember) an IP address over and over again. This tool is primarly designed to aid penetration testers and ethical hackers, however will also be useful for network engineers/admins whilst testing connectivity and troubleshooting.
 
@@ -11,8 +11,17 @@ The tool works by storing key-value pairs as {target_name}={IP}, which can be ad
 
 To pass this into any other tool, we can simply use this variable in place of an IP address, so: 
 
-```ping $cloudflare```
-```nmap $cloudflare```
+```bash
+ping $cloudflare
+```
+```bash
+nmap $cloudflare
+```
+
+Currently supported shells:
+
+* bash
+* zsh
 
 # Basic Installation
 
@@ -26,23 +35,37 @@ You should now be able to access tip from any location.
 # Usage
 
 ##### Adding a new target to the list
-```tip add {target_name} {IP}```
+```bash
+tip add {target_name} {IP}
+```
 
 ##### Accessing a target IP as an environment variable
-```echo ${target_name}```
-```nmap -sV -sC ${target_name}```
+```bash
+echo ${target_name}
+```
+```bash
+nmap -sV -sC ${target_name}
+```
 
 ##### Updating an existing target's IP - with update confirmation
-```tip add {existing_name} {IP}```
+```bash
+tip add {existing_name} {IP}
+```
 
 ##### Removing a target from the list
-```tip remove {name}```
+```bash
+tip remove {name}
+```
 
 ##### Display all current targets
-```tip list```
+```bash
+tip list
+```
 
 ##### Purge the target list
-```tip purge```
+```bash
+tip purge
+```
 
 # Contributing
 If you find any issues, feel free to report them on the GitHub repository. Pull requests are also welcome.
