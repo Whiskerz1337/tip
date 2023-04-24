@@ -68,6 +68,20 @@ tip list
 tip purge
 ```
 
+## Storing commands
+
+As a side note, tip can also be used to store and execute difficult to remember commands, for example:
+
+```bash
+tip add findsuid 'find / -perm -u=s -type f 2>/dev/null'
+```
+
+From here we can simply ```echo $findsuid``` to print out the string, or we can directly execute the command via:
+
+```bash
+eval "$findsuid"
+```
+
 # Contributing
 If you find any issues, feel free to report them on the GitHub repository. Pull requests are also welcome.
 
