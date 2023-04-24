@@ -2,6 +2,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
 
+pub use crate::install_functions;
+
 pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) {
     let file = OpenOptions::new()
         .read(true)
@@ -95,4 +97,8 @@ pub fn purge_list(targets_file_path: &PathBuf) {
         let _file = File::create(&targets_file_path).expect("Failed to purge file");
     }
     println!("Target list purged successfully.");
+}
+
+pub fn install_tip(targets_file_path: &PathBuf) {
+    install_functions::target_list_validation(targets_file_path)
 }
