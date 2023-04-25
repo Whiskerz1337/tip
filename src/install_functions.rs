@@ -120,16 +120,30 @@ pub fn create_empty_target_list(targets_file_path: &PathBuf) -> std::io::Result<
     Ok(())
 }
 
-pub fn target_list_validation(targets_file_path: &PathBuf) {
+pub fn target_list_validation(targets_file_path: &PathBuf) -> bool {
     println!("\nBeginning tip installation...\n");
     if !target_list_exists(&targets_file_path) {
         if let Err(e) = create_empty_target_list(&targets_file_path) {
             eprintln!("Failed to create targets.txt: {}", e);
+            false
         } else {
             println!("targets.txt created {}", "sucessfully".green());
+            true
         }
     } else {
-        println!("{}", "Target list already exists".yellow())
+        if utility_functions::user_confirmation(
+            "Target list found. Would you like to wipe the list? y/n".yellow(),
+        ) {
+            if let Err(e) = create_empty_target_list(&targets_file_path) {
+                eprintln!("Failed to create targets.txt: {}", e);
+                false
+            } else {
+                println!("Target list wiped {}", "sucessfully".green());
+                true
+            }
+        } else {
+            true
+        }
     }
 }
 
