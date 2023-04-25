@@ -1,4 +1,6 @@
-pub fn user_confirmation(question: &str) -> bool {
+use colored::ColoredString;
+
+pub fn user_confirmation(question: ColoredString) -> bool {
     println!("{}", question);
     let mut input = String::new();
     std::io::stdin()
