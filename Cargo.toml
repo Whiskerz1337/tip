@@ -7,4 +7,4 @@ edition = "2021"
 clap = { version = "4.2.4", features = ["derive"] }
 dirs = "5.0.0"
 regex = "1.8.1"
-
+colored = "2"

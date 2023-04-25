@@ -1,9 +1,9 @@
+pub use crate::install_functions;
+pub use crate::utility_functions;
+use colored::*;
 use std::fs::{File, OpenOptions};
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
-
-pub use crate::install_functions;
-pub use crate::utility_functions;
 
 pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) {
     let file = OpenOptions::new()
@@ -23,7 +23,7 @@ pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) 
             entry_already_exists = true;
 
             if utility_functions::user_confirmation(
-                "The entry already exists, would you like to update it? y/n",
+                "The entry already exists, would you like to update it? y/n".yellow(),
             ) {
                 lines[index] = format!("{}={}", name, address);
                 let mut file = OpenOptions::new()
@@ -35,19 +35,18 @@ pub fn add_target(targets_file_path: &PathBuf, name: &String, address: &String) 
                 for line in lines {
                     writeln!(file, "{}", line).expect("Failed to write line");
                 }
-                println!("Target updated successfully.");
+                println!("{}", "Target updated".green());
             } else {
-                println!("Target not updated.");
+                println!("Target not updated");
             }
             break;
         }
     }
     if !entry_already_exists {
         let write_result = writeln!(&file, "{}={}", name, address);
-        let success_message = "Target added successfully.";
-        let error_message = "Failed to write to file.";
+        let error_message = "Failed to write to file";
         write_result
-            .map(|_| println!("{}", success_message))
+            .map(|_| println!("{}", "Target added".green()))
             .unwrap_or_else(|_| eprintln!("{}", error_message));
     }
 }
@@ -73,9 +72,9 @@ pub fn remove_target(targets_file_path: &PathBuf, name: &String) {
         for line in lines {
             writeln!(file, "{}", line).expect("Failed to write line");
         }
-        println!("Target removed successfully.");
+        println!("{}", "Target removed".green());
     } else {
-        println!("Target not found.");
+        println!("{}", "Target not found".yellow());
     }
 }
 
@@ -90,10 +89,12 @@ pub fn list_targets(targets_file_path: &PathBuf) {
 }
 
 pub fn purge_list(targets_file_path: &PathBuf) {
-    {
+    if utility_functions::user_confirmation(
+        "Warning: This action will erase all entries. Proceed? y/n".yellow(),
+    ) {
         let _file = File::create(&targets_file_path).expect("Failed to purge file");
     }
-    println!("Target list purged successfully.");
+    println!("{}", "Target list purged".green());
 }
 
 pub fn install_tip(targets_file_path: &PathBuf, exe_path: &PathBuf) {

@@ -1,9 +1,9 @@
+use crate::utility_functions;
+use colored::Colorize;
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-
-use crate::utility_functions;
 
 pub fn get_shell_config_path() -> PathBuf {
     let shell_config_path = match std::env::var("SHELL") {
@@ -84,11 +84,18 @@ pub fn shell_config_validation(exe_path: &PathBuf) {
         Ok((comment_not_present, source_line_not_present)) => {
             if comment_not_present || source_line_not_present {
                 match source_tip_config(&shell_config_path, &full_tip_config_path) {
-                    Ok(_) => println!("Shell configuration completed successfully.\n\nPlease restart the shell or run 'source {}'", shell_config_path.to_string_lossy()),
+                    Ok(_) => println!(
+                        "Shell configuration completed {}\n\nInstallation {}\n\nPlease either {} your shell or run '{}{}'",
+                        "sucessfully".green(),
+                        "Complete".green().underline(),
+                        "restart".red(),
+                        "source ".cyan(),
+                        shell_config_path.to_string_lossy().cyan()
+                    ),
                     Err(e) => println!("Error: {}", e),
                 }
             } else {
-                println!("The tip configuration is already sourced.");
+                println!("{}", "The tip configuration is already sourced.".yellow());
             }
         }
         Err(e) => println!("Error: {}", e),
@@ -114,15 +121,15 @@ pub fn create_empty_target_list(targets_file_path: &PathBuf) -> std::io::Result<
 }
 
 pub fn target_list_validation(targets_file_path: &PathBuf) {
-    println!("Beginning tip installation...");
+    println!("\nBeginning tip installation...\n");
     if !target_list_exists(&targets_file_path) {
         if let Err(e) = create_empty_target_list(&targets_file_path) {
             eprintln!("Failed to create targets.txt: {}", e);
         } else {
-            println!("targets.txt created sucessfully.");
+            println!("targets.txt created {}", "sucessfully".green());
         }
     } else {
-        println!("Found targets.txt.")
+        println!("{}", "Target list already exists".yellow())
     }
 }
 
@@ -167,11 +174,11 @@ pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
         ) {
             eprintln!("Failed to create configuration file: {}", e);
         } else {
-            println!("Configuration file created sucessfully.");
+            println!("Configuration file created {}", "sucessfully".green());
         }
     } else {
         if utility_functions::user_confirmation(
-            "Found configuration file. Would you like to reset it? y/n",
+            "Found configuration file. Would you like to reset it? y/n".yellow(),
         ) {
             if let Err(e) = create_tip_config(
                 &targets_file_path,
@@ -181,7 +188,7 @@ pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
             ) {
                 eprintln!("Failed to create configuration file: {}", e);
             } else {
-                println!("Configuration file reset sucessfully.");
+                println!("Configuration file reset {}", "sucessfully.".green());
             }
         }
     }
