@@ -82,9 +82,12 @@ pub fn list_targets(targets_file_path: &PathBuf) {
     let file = File::open(&targets_file_path).expect("Failed to open file");
     let reader = BufReader::new(file);
 
+    println!("{}", "\nCurrent targets\n".magenta().bold());
+
     for line in reader.lines() {
         let line = line.expect("Failed to read line");
-        println!("{}", line);
+        let parts: Vec<&str> = line.split('=').collect();
+        println!("{}: {}", parts[0].bold().cyan(), parts[1]);
     }
 }
 
@@ -93,8 +96,10 @@ pub fn purge_list(targets_file_path: &PathBuf) {
         "Warning: This action will erase all entries. Proceed? y/n".yellow(),
     ) {
         let _file = File::create(&targets_file_path).expect("Failed to purge file");
+        println!("{}", "Target list purged".green());
+    } else {
+        println!("{}", "Aborting purge...".yellow());
     }
-    println!("{}", "Target list purged".green());
 }
 
 pub fn install_tip(targets_file_path: &PathBuf, exe_path: &PathBuf) {
