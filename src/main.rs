@@ -40,10 +40,21 @@ fn main() {
 
     match &cli.command {
         Commands::Add { name, address } => {
-            command_functions::add_target(&targets_file_path, name, address)
+            if let Err(e) = command_functions::add_target(&targets_file_path, name, address) {
+                eprintln!("Error: {}", e);
+            }
         }
-        Commands::Remove { name } => command_functions::remove_target(&targets_file_path, &name),
-        Commands::List => command_functions::list_targets(&targets_file_path),
+        Commands::Remove { name } => {
+            if let Err(e) = command_functions::remove_target(&targets_file_path, name) {
+                eprintln!("Error: {}", e)
+            }
+        }
+        Commands::List => {
+            if let Err(e) = command_functions::list_targets(&targets_file_path) {
+                eprintln!("Error: {}", e)
+            }
+        }
+
         Commands::Purge => command_functions::purge_list(&targets_file_path),
         Commands::Install => command_functions::install_tip(&targets_file_path, &exe_path),
     }
