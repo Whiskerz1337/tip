@@ -140,7 +140,7 @@ pub fn install_tip(targets_file_path: &PathBuf, exe_path: &Path) {
     match result {
         Ok(_) => {
             println!(
-                "\n\nInstallation {}\n\nPlease either {} your shell or run '{}{}'\n",
+                "\nInstallation {}\n\nPlease either {} your shell or run '{}{}'\n",
                 "Complete".green().underline(),
                 "restart".red(),
                 "source ".cyan(),

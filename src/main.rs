@@ -1,13 +1,16 @@
-// use std::path::{Path, PathBuf};
-
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 
 mod command_functions;
 pub mod install_functions;
 pub mod utility_functions;
 
+const APP_NAME: &str = env!("CARGO_PKG_NAME");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+// const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
+
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
@@ -18,12 +21,12 @@ struct Cli {
 enum Commands {
     /// adds a new target entry
     Add { name: String, address: String },
+    /// removes a single target entry by name
+    Remove { name: String },
     /// lists the current target list
     List,
     /// purges the target list
     Purge,
-    /// removes a single target entry by name
-    Remove { name: String },
     /// adds neccessary scripts to the shell configuration file
     Install,
     /// removes shell configuration entry
@@ -31,6 +34,19 @@ enum Commands {
 }
 
 fn main() {
+    println!(
+        "\n{} {}{}\n",
+        APP_NAME.green().bold(),
+        "v".green().bold(),
+        VERSION.green().bold()
+    );
+    // println!(
+    //     "{} {}\n",
+    //     "By".bright_blue(),
+    //     AUTHORS.bright_blue().italic().underline()
+    // );
+    println!("{}\n", DESCRIPTION.bright_blue());
+
     let cli = Cli::parse();
 
     let exe_path = std::env::current_exe().expect("Failed to get executable path");
