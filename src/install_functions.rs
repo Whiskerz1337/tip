@@ -71,35 +71,25 @@ pub fn get_full_path(directory: &Path, relative_path: &PathBuf) -> PathBuf {
     directory.join(relative_path)
 }
 
-pub fn shell_config_validation(exe_path: &Path) {
+pub fn shell_config_validation(exe_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let tip_config_path = get_tip_config_path();
     let shell_config_path = get_shell_config_path();
     let parent_directory = exe_path
         .parent()
-        .expect("Failed to get parent directory of executable");
+        .ok_or("Failed to get parent directory of executable")?;
 
     let full_tip_config_path = get_full_path(parent_directory, &tip_config_path);
 
-    match tip_config_is_sourced(&shell_config_path, &full_tip_config_path) {
-        Ok((comment_not_present, source_line_not_present)) => {
-            if comment_not_present || source_line_not_present {
-                match source_tip_config(&shell_config_path, &full_tip_config_path) {
-                    Ok(_) => println!(
-                        "Shell configuration completed {}\n\nInstallation {}\n\nPlease either {} your shell or run '{}{}'",
-                        "sucessfully".green(),
-                        "Complete".green().underline(),
-                        "restart".red(),
-                        "source ".cyan(),
-                        shell_config_path.to_string_lossy().cyan()
-                    ),
-                    Err(e) => println!("Error: {}", e),
-                }
-            } else {
-                println!("{}", "The tip configuration is already sourced.".yellow());
-            }
-        }
-        Err(e) => println!("Error: {}", e),
+    let (comment_not_present, source_line_not_present) =
+        tip_config_is_sourced(&shell_config_path, &full_tip_config_path)?;
+
+    if comment_not_present || source_line_not_present {
+        source_tip_config(&shell_config_path, &full_tip_config_path)?;
+        println!("tip configuration file sourced {}", "successfully".green());
+    } else {
+        println!("{}", "The tip configuration is already sourced.".yellow());
     }
+    Ok(())
 }
 
 pub fn target_list_exists(targets_file_path: &Path) -> bool {
@@ -120,29 +110,19 @@ pub fn create_empty_target_list(targets_file_path: &PathBuf) -> std::io::Result<
     Ok(())
 }
 
-pub fn target_list_validation(targets_file_path: &PathBuf) -> bool {
-    println!("\nBeginning tip installation...\n");
+pub fn target_list_validation(
+    targets_file_path: &PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
     if !target_list_exists(targets_file_path) {
-        if let Err(e) = create_empty_target_list(targets_file_path) {
-            eprintln!("Failed to create targets.txt: {}", e);
-            false
-        } else {
-            println!("targets.txt created {}", "sucessfully".green());
-            true
-        }
+        create_empty_target_list(targets_file_path)?;
+        println!("targets.txt created {}", "successfully".green());
     } else if utility_functions::user_confirmation(
         "Target list found. Would you like to wipe the list? y/n".yellow(),
     ) {
-        if let Err(e) = create_empty_target_list(targets_file_path) {
-            eprintln!("Failed to create targets.txt: {}", e);
-            false
-        } else {
-            println!("Target list wiped {}", "sucessfully".green());
-            true
-        }
-    } else {
-        true
+        create_empty_target_list(targets_file_path)?;
+        println!("Target list wiped {}", "successfully".green());
     }
+    Ok(())
 }
 
 pub fn create_tip_config(
@@ -169,37 +149,83 @@ pub fn get_tip_config_path() -> PathBuf {
     PathBuf::from("config/tip-config.sh")
 }
 
-pub fn tip_config_validation(targets_file_path: &Path, exe_path: &Path) {
+pub fn tip_config_validation(
+    targets_file_path: &Path,
+    exe_path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let config_dir = PathBuf::from("config");
     let tip_config_path = config_dir.join("tip-config.sh");
     let parent_directory = exe_path
         .parent()
-        .expect("Failed to get parent directory of executable");
+        .ok_or("Failed to get parent directory of executable")?;
     let full_tip_config_path = get_full_path(parent_directory, &tip_config_path);
 
     if !tip_config_exists(&full_tip_config_path) {
-        if let Err(e) = create_tip_config(
+        create_tip_config(
             targets_file_path,
             exe_path,
             &tip_config_path,
             &full_tip_config_path,
-        ) {
-            eprintln!("Failed to create configuration file: {}", e);
-        } else {
-            println!("Configuration file created {}", "sucessfully".green());
-        }
+        )?;
+        println!("Configuration file created {}", "successfully".green());
     } else if utility_functions::user_confirmation(
         "Found configuration file. Would you like to reset it? y/n".yellow(),
     ) {
-        if let Err(e) = create_tip_config(
+        create_tip_config(
             targets_file_path,
             exe_path,
             &tip_config_path,
             &full_tip_config_path,
-        ) {
-            eprintln!("Failed to create configuration file: {}", e);
-        } else {
-            println!("Configuration file reset {}", "sucessfully.".green());
-        }
+        )?;
+        println!("Configuration file reset {}", "successfully.".green());
     }
+    Ok(())
+}
+
+pub fn remove_shell_source_line(exe_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let tip_config_path = get_tip_config_path();
+    let shell_config_path = get_shell_config_path();
+    let parent_directory = exe_path
+        .parent()
+        .ok_or("Failed to get parent directory of executable")?;
+
+    let full_tip_config_path = get_full_path(parent_directory, &tip_config_path);
+
+    let (comment_not_present, source_line_not_present) =
+        tip_config_is_sourced(&shell_config_path, &full_tip_config_path)?;
+
+    if !comment_not_present || !source_line_not_present {
+        delete_config_lines(&shell_config_path, &full_tip_config_path)?;
+        println!(
+            "/ntip configuration sourcing removed {}",
+            "sucessfully".green()
+        );
+    } else {
+        println!("{}", "The tip configuration is not sourced.".yellow());
+    }
+    Ok(())
+}
+
+pub fn delete_config_lines(
+    shell_config_path: &PathBuf,
+    full_tip_config_path: &Path,
+) -> std::io::Result<()> {
+    let comment = "# Source tip configuration";
+    let source_line = format!("source {}", full_tip_config_path.to_string_lossy());
+
+    let content = std::fs::read_to_string(shell_config_path)?;
+    let lines: Vec<&str> = content.lines().collect();
+
+    let filtered_lines: Vec<&str> = lines
+        .iter()
+        .filter(|&line| line.trim() != comment && line.trim() != source_line)
+        .copied()
+        .collect();
+
+    let mut file = std::fs::File::create(shell_config_path)?;
+    for line in filtered_lines {
+        writeln!(file, "{}", line)?;
+    }
+
+    Ok(())
 }
