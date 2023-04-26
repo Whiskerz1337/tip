@@ -26,6 +26,8 @@ enum Commands {
     Remove { name: String },
     /// adds neccessary scripts to the shell configuration file
     Install,
+    /// removes shell configuration entry
+    Uninstall,
 }
 
 fn main() {
@@ -54,8 +56,12 @@ fn main() {
                 eprintln!("Error: {}", e)
             }
         }
-
-        Commands::Purge => command_functions::purge_list(&targets_file_path),
+        Commands::Purge => {
+            if let Err(e) = command_functions::purge_list(&targets_file_path) {
+                eprint!("Error: {}", e)
+            }
+        }
         Commands::Install => command_functions::install_tip(&targets_file_path, &exe_path),
+        Commands::Uninstall => command_functions::uninstall_tip(&exe_path),
     }
 }
