@@ -30,7 +30,7 @@ pub fn get_shell_config_path() -> PathBuf {
 
 pub fn tip_config_is_sourced(
     shell_config_path: &PathBuf,
-    full_tip_config_path: &PathBuf,
+    full_tip_config_path: &Path,
 ) -> std::io::Result<(bool, bool)> {
     let comment = "# Source tip configuration";
     let source_line = format!("source {}", full_tip_config_path.to_string_lossy());
@@ -51,7 +51,7 @@ pub fn tip_config_is_sourced(
 
 pub fn source_tip_config(
     shell_config_path: &PathBuf,
-    full_tip_config_path: &PathBuf,
+    full_tip_config_path: &Path,
 ) -> std::io::Result<()> {
     let comment = "# Source tip configuration";
     let source_line = format!("source {}", full_tip_config_path.to_string_lossy());
@@ -71,14 +71,14 @@ pub fn get_full_path(directory: &Path, relative_path: &PathBuf) -> PathBuf {
     directory.join(relative_path)
 }
 
-pub fn shell_config_validation(exe_path: &PathBuf) {
+pub fn shell_config_validation(exe_path: &Path) {
     let tip_config_path = get_tip_config_path();
     let shell_config_path = get_shell_config_path();
     let parent_directory = exe_path
         .parent()
         .expect("Failed to get parent directory of executable");
 
-    let full_tip_config_path = get_full_path(&parent_directory, &tip_config_path);
+    let full_tip_config_path = get_full_path(parent_directory, &tip_config_path);
 
     match tip_config_is_sourced(&shell_config_path, &full_tip_config_path) {
         Ok((comment_not_present, source_line_not_present)) => {
@@ -102,7 +102,7 @@ pub fn shell_config_validation(exe_path: &PathBuf) {
     }
 }
 
-pub fn target_list_exists(targets_file_path: &PathBuf) -> bool {
+pub fn target_list_exists(targets_file_path: &Path) -> bool {
     targets_file_path.exists() && targets_file_path.is_file()
 }
 
@@ -122,48 +122,46 @@ pub fn create_empty_target_list(targets_file_path: &PathBuf) -> std::io::Result<
 
 pub fn target_list_validation(targets_file_path: &PathBuf) -> bool {
     println!("\nBeginning tip installation...\n");
-    if !target_list_exists(&targets_file_path) {
-        if let Err(e) = create_empty_target_list(&targets_file_path) {
+    if !target_list_exists(targets_file_path) {
+        if let Err(e) = create_empty_target_list(targets_file_path) {
             eprintln!("Failed to create targets.txt: {}", e);
             false
         } else {
             println!("targets.txt created {}", "sucessfully".green());
             true
         }
-    } else {
-        if utility_functions::user_confirmation(
-            "Target list found. Would you like to wipe the list? y/n".yellow(),
-        ) {
-            if let Err(e) = create_empty_target_list(&targets_file_path) {
-                eprintln!("Failed to create targets.txt: {}", e);
-                false
-            } else {
-                println!("Target list wiped {}", "sucessfully".green());
-                true
-            }
+    } else if utility_functions::user_confirmation(
+        "Target list found. Would you like to wipe the list? y/n".yellow(),
+    ) {
+        if let Err(e) = create_empty_target_list(targets_file_path) {
+            eprintln!("Failed to create targets.txt: {}", e);
+            false
         } else {
+            println!("Target list wiped {}", "sucessfully".green());
             true
         }
+    } else {
+        true
     }
 }
 
 pub fn create_tip_config(
-    targets_file_path: &PathBuf,
-    exe_path: &PathBuf,
+    targets_file_path: &Path,
+    exe_path: &Path,
     tip_config_path: &Path,
-    full_tip_config_path: &PathBuf,
+    full_tip_config_path: &Path,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let binding = std::env::current_dir()?;
     let current_dir = binding.to_str().unwrap();
     let targets_file_path_str = targets_file_path.to_string_lossy();
     let config_dir = PathBuf::from("config");
-    std::fs::create_dir_all(&config_dir)?;
+    std::fs::create_dir_all(config_dir)?;
     let config_update = format!(
         "# Adds tip install folder to PATH if not already added\nif [[ \":$PATH:\" != *\":{}:\"* ]]; then\n    export PATH=\"$PATH:{}\"\nfi\n\n# Begin tip configuration\nfunction load_targets() {{\n    while IFS='=' read -r name address; do\n        export \"$name=$address\"\n    done < \"{}\"\n}}\n\n# Call the load_targets function during shell initialization\nload_targets\n\n# Shell function to allow sourcing\nfunction tip() {{\n  {} \"$@\"\n  source {}\n}}",
         current_dir, current_dir, targets_file_path_str, exe_path.display(), full_tip_config_path.display()
     );
 
-    std::fs::write(&tip_config_path, config_update)?;
+    std::fs::write(tip_config_path, config_update)?;
     Ok(tip_config_path.to_path_buf())
 }
 
@@ -171,7 +169,7 @@ pub fn get_tip_config_path() -> PathBuf {
     PathBuf::from("config/tip-config.sh")
 }
 
-pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
+pub fn tip_config_validation(targets_file_path: &Path, exe_path: &Path) {
     let config_dir = PathBuf::from("config");
     let tip_config_path = config_dir.join("tip-config.sh");
     let parent_directory = exe_path
@@ -181,7 +179,7 @@ pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
 
     if !tip_config_exists(&full_tip_config_path) {
         if let Err(e) = create_tip_config(
-            &targets_file_path,
+            targets_file_path,
             exe_path,
             &tip_config_path,
             &full_tip_config_path,
@@ -190,20 +188,18 @@ pub fn tip_config_validation(targets_file_path: &PathBuf, exe_path: &PathBuf) {
         } else {
             println!("Configuration file created {}", "sucessfully".green());
         }
-    } else {
-        if utility_functions::user_confirmation(
-            "Found configuration file. Would you like to reset it? y/n".yellow(),
+    } else if utility_functions::user_confirmation(
+        "Found configuration file. Would you like to reset it? y/n".yellow(),
+    ) {
+        if let Err(e) = create_tip_config(
+            targets_file_path,
+            exe_path,
+            &tip_config_path,
+            &full_tip_config_path,
         ) {
-            if let Err(e) = create_tip_config(
-                &targets_file_path,
-                exe_path,
-                &tip_config_path,
-                &full_tip_config_path,
-            ) {
-                eprintln!("Failed to create configuration file: {}", e);
-            } else {
-                println!("Configuration file reset {}", "sucessfully.".green());
-            }
+            eprintln!("Failed to create configuration file: {}", e);
+        } else {
+            println!("Configuration file reset {}", "sucessfully.".green());
         }
     }
 }
