@@ -197,7 +197,7 @@ pub fn remove_shell_source_line(exe_path: &Path) -> Result<(), Box<dyn std::erro
     if !comment_not_present || !source_line_not_present {
         delete_config_lines(&shell_config_path, &full_tip_config_path)?;
         println!(
-            "/ntip configuration sourcing removed {}",
+            "\ntip configuration sourcing removed {}",
             "sucessfully".green()
         );
     } else {
