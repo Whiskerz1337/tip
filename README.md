@@ -1,7 +1,7 @@
 # tip 
 #### A Simple Linux CLI Tool for Saving and Managing Target IP Addresses
 
-Tip is a command line interface (CLI) tool written in Rust that simplifies managing multiple target IP addresses by storing them in a file and allowing you to easily add, remove, list, and update targets. It also provides a shell function to source the targets into your environment variables.
+Tip is a command line interface (CLI) tool written in Rust that simplifies managing multiple target IP addresses by storing them in a file and allowing you to easily add, remove, list, and update targets. It also provides a shell function to source the targets into your local variables.
 
 Normal variable assignment is possible in Linux by default, however these are lost on reboot and when creating new shell instances. Personally I regularly find myself with multiple terminal windows open running different scans, and having to retype (and remember) an IP address over and over again. This tool is primarly designed to aid penetration testers and ethical hackers, however will also be useful for network engineers/admins whilst testing connectivity and troubleshooting.
 
@@ -40,7 +40,7 @@ You should now be able to access tip from any location.
 tip add {target_name} {IP}
 ```
 
-##### Accessing a target IP as an environment variable
+##### Accessing a target IP as an local variable
 ```bash
 echo ${target_name}
 ```
