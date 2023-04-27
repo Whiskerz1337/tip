@@ -12,9 +12,10 @@ pub fn add_target(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let file = OpenOptions::new()
         .read(true)
-        .create(true)
         .append(true)
         .open(targets_file_path)?;
+
+    let parsed_name = utility_functions::parse_input_string(name);
 
     let reader = BufReader::new(&file);
     let mut lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
@@ -22,13 +23,13 @@ pub fn add_target(
 
     for (index, line) in lines.iter().enumerate() {
         let entry_name = line.split('=').next().unwrap_or("");
-        if entry_name == name {
+        if entry_name == parsed_name {
             entry_already_exists = true;
 
             if utility_functions::user_confirmation(
                 "The entry already exists, would you like to update it? y/n".yellow(),
             ) {
-                lines[index] = format!("{name}={address}");
+                lines[index] = format!("{parsed_name}={address}");
                 let mut file = OpenOptions::new()
                     .write(true)
                     .truncate(true)
@@ -39,14 +40,14 @@ pub fn add_target(
                 }
                 println!("{}", "Target updated".green());
             } else {
-                println!("Target not updated");
+                println!("{}", "Target not updated".yellow());
             }
             break;
         }
     }
     if !entry_already_exists {
         let mut file = OpenOptions::new().append(true).open(targets_file_path)?;
-        writeln!(&mut file, "{name}={address}")?;
+        writeln!(&mut file, "{parsed_name}={address}")?;
         println!("{}", "Target added".green());
     }
 
@@ -101,7 +102,7 @@ pub fn list_targets(targets_file_path: &PathBuf) -> Result<(), Box<dyn std::erro
         let parts: Vec<&str> = line.split('=').collect();
         if parts.len() == 2 {
             if !has_entries {
-                println!("{}", "\nCurrent targets\n".magenta().bold().underline());
+                println!("{}", "Current targets".magenta().bold().underline());
                 has_entries = true;
             }
             println!("{}: {}", parts[0].bold().cyan(), parts[1]);

@@ -1,9 +1,9 @@
 [package]
 name = "tip"
-version = "1.1.0"
+version = "2.0.0"
 edition = "2021"
 authors = ["Whiskerz"]
-description = "A simple tool for storing, managing and passing IP addresses"
+description = "A tool for managing target IP addresses"
 
 [dependencies]
 clap = { version = "4.2.4", features = ["derive"] }
