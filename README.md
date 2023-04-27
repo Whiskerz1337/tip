@@ -79,7 +79,7 @@ tip add findsuid 'find / -perm -u=s -type f 2>/dev/null'
 From here we can simply ```echo $findsuid``` to print out the string, or we can directly execute the command via:
 
 ```bash
-eval "$findsuid"
+eval $findsuid
 ```
 
 # Contributing
