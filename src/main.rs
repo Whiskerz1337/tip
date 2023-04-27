@@ -1,14 +1,8 @@
 use clap::{Parser, Subcommand};
-use colored::Colorize;
 
 mod command_functions;
 pub mod install_functions;
 pub mod utility_functions;
-
-const APP_NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-// const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
-const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
 
 #[derive(Parser)]
 #[command(propagate_version = true)]
@@ -16,6 +10,8 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
+
+/// tip v2.0.1 - target IP address management tool
 
 #[derive(Subcommand)]
 enum Commands {
@@ -34,27 +30,12 @@ enum Commands {
 }
 
 fn main() {
-    println!(
-        "\n{} {}{}\n",
-        APP_NAME.green().bold(),
-        "v".green().bold(),
-        VERSION.green().bold()
-    );
-    // println!(
-    //     "{} {}\n",
-    //     "By".bright_blue(),
-    //     AUTHORS.bright_blue().italic().underline()
-    // );
-    println!("{}\n", DESCRIPTION.bright_blue());
-
-    let cli = Cli::parse();
-
     let exe_path = std::env::current_exe().expect("Failed to get executable path");
     let main_dir = exe_path
         .parent()
         .expect("Failed to get parent directory of executable");
-
     let targets_file_path = main_dir.join("targets.txt");
+    let cli = Cli::parse();
 
     match &cli.command {
         Commands::Add { name, address } => {
